@@ -95,7 +95,7 @@ La raspberry va demarrer
 
 Exemmple:
  - [log](<https://docs.google.com/document/d/1BNW0uXCjVyg87TGipDLzPzvVrpjbDQw9J5DBHsRWNfY/edit?usp=sharing>)
- - [presentation](<https://docs.google.com/presentation/d/133-CHRmHWjJb9L3z88HlBSB_0j9DTEWmJkn-5gD1Zp8/edit?usp=sharing>)
+ - [presentation](<https://docs.google.com/presentation/d/1awmTttnjZcQe5-KutgFCA4hrhCaiEiTH/edit?usp=sharing&ouid=104476098094281710249&rtpof=true&sd=true>)
 
 # Modification pour afficher une presentation
 
@@ -114,17 +114,24 @@ En ligne de commande:
 
 ## Telechargement d'une presentation depuis google drive
 
-[source](<https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99>)
+WARNING: Si le fichier a ete cree dans drive, il ne sera pas possible de le telecharger, dans ce cas, telecharger manuellement et uploader le fichier.
 
-1. Extraire l'ID du document depuis l'address de partage
-1. Telecharger le document avec la commande:
+[source](<https://github.com/wkentaro/gdown)
+
+1. Installer le package python
 
 ```
-wget --no-check-certificate -O FILENAME 'https://docs.google.com/uc?export=download&id=FILEID'
+pip install gdown
+```
+
+1. Telecharger le document avec gdown:
+
+```
+gdown <LINK> <OUTPUT>
 ```
 Donc pour notre example:
 ```
-wget --no-check-certificate -O FILENAME 'https://docs.google.com/uc?export=download&id=133-CHRmHWjJb9L3z88HlBSB_0j9DTEWmJkn-5gD1Zp8'
+python3 cb_kiosk/dl_from_drive.py "https://docs.google.com/presentation/d/1awmTttnjZcQe5-KutgFCA4hrhCaiEiTH/edit?usp=sharing&ouid=104476098094281710249&rtpof=true&sd=true" flprez.ppt
 ```
 
 ## Affichage d'une presentation
@@ -132,4 +139,142 @@ wget --no-check-certificate -O FILENAME 'https://docs.google.com/uc?export=downl
 ## Verification reguliere pour nouvelle version de la presentation
 
 ## Stockage de l'activite de la raspberry sur drive
+
+
+https://docs.google.com/presentation/d/e/2PACX-1vSIhmvpmyYEpqDX-lNgvpaEJWoNNKnnmSC14NuucIkadE2bIb_a4D9ThcITqACFVw/pub?start=true&loop=true&delayms=15000
+
+
+=> It seems there is no OS solution to display a ppt as a slideshow
++ google slides do not integrate delays....bbuiltin delay between slides is 4 seconds !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ppt -> info timing -> slideshow is just rendering + timing
+odp -> 
+gsslides -> a mess...
+
+# Installation sur board pour mode kiosk
+
+## Impress
+
+Sur la board:
+
+```
+sudo apt update
+sudo apt install -y default-jre
+sudo apt install -y libreoffice-java-common
+sudo apt install -y libreoffice-writer
+```
+
+## Script pour telecharger la presentation
+
+```
+scp dl_from_drive.py pi@<pi network address>/home/pi/prez
+```
+
+## Lancement de la presentation
+
+```
+python3 dl_from_drive.py <lien de partage de la presentation>
+impress --show presentation.ppt
+```
+
+## Tunnel SSH pour controler la board a distance
+
+[source](<https://doc.ubuntu-fr.org/tutoriel/reverse_ssh>)
+-> La board est le systeme "distant" et la machine d'un utilisateur est "local".
+
+Ce systeme permettra de faire que la board se connecte a une machine particuliere d'un utilisateur,
+et donc l'utilisateur pourra se connecter sur la board sans avoir ses informations.
+
+### Parametres
+
+Voici les differents parametres:
+
+- PI_USERNAME = pi
+- PI_SSH_PORT = 22
+- USERNAME = eramox
+- USER_IP_ADDR = 88.170.53.149
+- USER_SSH_PORT = 22222
+- EXCHANGE_PORT = 26000
+
+### Configuration
+
+La cle de la board doit etre ajoute a la machine a laquelle la board va se connecter
+
+```
+ssh-copy-id -p <USER_SSH_PORT> <USERNAME>@<USER_IP_ADDR> 
+ssh-copy-id -p 22222 eramox@88.170.53.149
+```
+
+### Installation
+
+Sur la board:
+```
+sudo apt update
+sudo apt install -y autossh
+sudo nano /etc/systemd/system/autossh.service
+```
+
+avec le contenu:
+
+```
+[Unit]
+Description=Keep a tunnel open on port 22
+After=network.target
+ 
+[Service]
+# User=<PI_USERNAME>
+User=pi
+# ExecStart=/usr/bin/autossh -o ServerAliveInterval=60 -NR <EXCHANGE_PORT>:localhost:<PI_SSH_PORT> -p <USER_SSH_PORT> <USERNAME>@<USER_IP_ADDR>
+ExecStart=/usr/bin/autossh -o ServerAliveInterval=60 -NR 26000:localhost:22 -p 22222 eramox@88.170.53.149
+Restart=on-failure
+ 
+[Install]
+WantedBy=multi-user.target
+```
+
+Et finalement:
+
+```
+sudo systemctl --now enable autossh.service
+sudo systemctl status autossh
+```
+
+Il sera possible de se connecter a la board depuis la machine utilisateur avec la commande:
+
+```
+ssh -p <EXCHANGE_PORT> <PI_USERNAME>@localhost
+ssh -p 26000 pi@localhost
+```
+
+## Programs
+
+### Display when calling from ssh
+
+```
+export DISPLAY=:0.0
+```
+
+### convert ppt to pdf
+
+```
+soffice --headless --convert-to pdf <name>.ppt
+```
+The resulting file will be <name>.pdf
+
+### display
+
+```
+impressive --auto 15 --fullscreen --page-progress --wrap --nocursor --nologo --noclicks --nooverview --clock <name>.pdf
+```
+
+
+
+
+
+
+
+
+
+
+
 
