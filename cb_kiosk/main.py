@@ -6,25 +6,22 @@ from kiosk_service import KioskService
 
 logging.basicConfig()
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-
-# async def main(version_share_link):
-def main(version_share_link: str, python_env_path: str):
-    # return await KioskService(version_share_link).loop()
-    return KioskService(version_share_link, python_env_path).loop()
-
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
-    link = sys.argv[1]
+    nb_args = len(sys.argv)
 
-    if len(sys.argv) >= 3 and sys.argv[2] is not None:
-        python_env_path = sys.argv[2]
+    if nb_args > 1:
+        version_share_link = sys.argv[1]
+        log.info(f"Using the version file {version_share_link}")
     else:
-        python_env_path = os.path.join(os.path.dirname(__file__), "venv")
+        log.error(f"Missing link on version file")
+        exit(1)
 
-    logger.info(f"Using the version file {link}")
+    # if nb_args > 2:
+    #     new_root_dir = sys.argv[2]
+    #     log.info(f"Chnaging root to new directory: {new_root_dir}")
+    #     os.chdir(new_root_dir)
 
-    # asyncio.run(main(link))
-    main(link, python_env_path)
+    KioskService(version_share_link).loop()

@@ -19,11 +19,9 @@ class KioskService:
 	CONVERT_TYPE = "pdf"
 	DISPLAY_FILE = "presentation.pdf"
 
-	def __init__(self, share_link_published_version: str, python_env_path: str, delay_seconds: int = 10):
+	def __init__(self, share_link_published_version: str, delay_seconds: int = 10):
 		""" Link to the file containing the share link of the presentation to use """
 		self.log = logger
-
-		self.venv = python_env_path
 
 		# Variables related to the links
 		self.link: str = share_link_published_version
@@ -33,13 +31,14 @@ class KioskService:
 		self.delay_seconds: int = delay_seconds
 
 		# Create a temporary directory to store files downloaded
-		self.tdir = tempfile.TemporaryDirectory()
+		# self.tdir = tempfile.TemporaryDirectory().name
+		self.tdir = os.getcwd()
 
-		self.version_file: str = os.path.join(self.tdir.name, self.VERSION_FILE)
-		self.presentation_file: str = os.path.join(self.tdir.name, self.PRESENTATION_FILE)
-		self.display_file: str = os.path.join(self.tdir.name, self.DISPLAY_FILE)
+		self.version_file: str = os.path.join(self.tdir, self.VERSION_FILE)
+		self.presentation_file: str = os.path.join(self.tdir, self.PRESENTATION_FILE)
+		self.display_file: str = os.path.join(self.tdir, self.DISPLAY_FILE)
 
-		self.log.info(f"Created the kiosk service in {self.tdir.name} with a delay of {self.delay_seconds} using file {self.link}")
+		self.log.info(f"Created the kiosk service in {self.tdir} with a delay of {self.delay_seconds} using file {self.link}")
 
 		self.display_task = None
 
@@ -97,24 +96,24 @@ class KioskService:
 		""" Run with impressive """
 		self.log.debug(f"Running the presentation {self.display_file}")
 
-		command = [
-			".",
-			os.path.join(self.venv, "bin/activate"),
-			"&&"
-			"impressive",
-			"--auto", "15",
-			"--fullscreen",
-			"--page",
-			"--progress",
-			"--wrap",
-			"--nocursor",
-			"--nologo",
-			"--noclicks",
-			"--nooverview",
-			'--clock',
-			self.display_file,
-		]
-		execute_command(command)
+		# command = [
+		# 	".",
+		# 	os.path.join(self.venv, "bin/activate"),
+		# 	"&&"
+		# 	"impressive",
+		# 	"--auto", "15",
+		# 	"--fullscreen",
+		# 	"--page",
+		# 	"--progress",
+		# 	"--wrap",
+		# 	"--nocursor",
+		# 	"--nologo",
+		# 	"--noclicks",
+		# 	"--nooverview",
+		# 	'--clock',
+		# 	self.display_file,
+		# ]
+		# execute_command(command)
 
 
 def execute_command(cmd: List[str]):
