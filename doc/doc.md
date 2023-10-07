@@ -264,6 +264,8 @@ The resulting file will be <name>.pdf
 ### display
 
 ```
+pip install pygame
+pip install impressive
 impressive --auto 15 --fullscreen --page-progress --wrap --nocursor --nologo --noclicks --nooverview --clock <name>.pdf
 ```
 
