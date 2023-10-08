@@ -1,6 +1,8 @@
+# To download documents from drive
 requests
-python-pptx
-docx2txt
-odfpy
 requests_toolbelt
 requests_debugger
+# Get the presentation file link
+python-docx
+# Get the timings
+python-pptx

@@ -33,12 +33,14 @@ def pretty_print_POST(req) -> str:
         '------------END------------',
     )
 
+class DriveError(Exception):
+    pass
 
 class DriveFileDownloader:
     URL = "https://drive.google.com/uc"
     CHUNK_SIZE = 32768
 
-    def __init__(self, share_link: str):
+    def __init__(self, share_link: str, logger=logger):
         """
         id: Unique identifier of the google document
         destination: Where to save the file downlaod
@@ -104,61 +106,6 @@ class DriveFileDownloader:
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
 
-    def download2(self, destination: str):
-        self.log.debug(f"Downloading {self.uid} to {destination}")
-        session = requests.Session()
-
-        params = {
-            'id' : self.uid,
-            'pageid' : 'p1',
-            'returnExportRedirectUrl' : 'true',
-            'includes_info_params' : '1',
-            'usp' : 'share_link',
-            'cros_files' : 'false',
-        }
-        response = session.get(self.export_link, params = params, stream = True)
-
-
-        self.log.debug(f"{response.headers=}")
-        self.log.debug(f"{response.json=}")
-        self.log.debug(f"{response.cookies=}")
-        self.log.debug(f"{response.content=}")
-
-        if not response.ok:
-            raise ValueError(f"Failed to retrieve export link {response.status_code}: {response.reason}")
-
-        # The response content contain a json with the export link
-        data = response.content.decode('UTF-8')
-        self.log.debug(f"{data=}")
-
-        # The string has some garbage at the start
-        data = data[5:]
-        self.log.debug(f"{data=}")
-
-        # The string contains double backslahes to remove
-        data.replace('\\', '')
-        self.log.debug(f"{data=}")
-
-        json_data = json.loads(data)
-        self.log.debug(f"{json_data=}")
-
-        # Download the document
-        params.update({
-            'exportFormat' : self.export_type
-        })
-        response = session.get(json_data['exportUrl'], params = params)
-
-        self.log.debug(f"{response.headers=}")
-        self.log.debug(f"{response.json=}")
-        self.log.debug(f"{response.cookies=}")
-        self.log.debug(f"{response.content=}")
-
-        # if not response.ok:
-        #     raise ValueError(f"Failed to download document {response.status_code}: {response.reason}")
-
-        self.save_response_content(response, destination)
-
-
     def download(self, destination: str):
         self.log.debug(f"Downloading {self.uid} to {destination}")
         session = requests.Session()
@@ -174,7 +121,10 @@ class DriveFileDownloader:
 
         self.log.debug(pretty_print_POST(prepped))
 
-        response = session.get(self.URL, params = params)
+        try:
+            response = session.get(self.URL, params = params)
+        except requests.exceptions.HTTPError as e:
+            raise DriveError(e)
 
         self.log.debug(f"{response.headers=}")
         self.log.debug(f"{response.json=}")
