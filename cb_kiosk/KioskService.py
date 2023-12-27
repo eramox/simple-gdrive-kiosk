@@ -4,6 +4,7 @@ import tempfile
 import shutil
 
 from docx import Document
+from pptx import Presentation
 
 from downloader.Downloader import Downloader, DownloadError
 from downloader.loader import load as load_downloader
@@ -29,7 +30,7 @@ class KioskService:
 	WEBSERVER_DIR = "webserver"
 	DISPLAY_FILE = "presentation.pdf"
 	WEBSERVER_PORT = 8000
-	DEFAULT_TIMEOUT = 2000
+	DEFAULT_TIMEOUT = 2
 
 	def __init__(self, share_link_published_version: str, delay_loop_s: int = 10, logger=logger):
 		""" Link to the file containing the share link of the presentation to use """
@@ -74,11 +75,7 @@ class KioskService:
 		self.httpd = httpd
 
 	def stop(self):
-		pass
-	# 	self.log.info(f"Stopping the service")
-
-	# 	if self.httpd is not None:
-	# 		self.httpd.stop_server()
+		self.stop_slideshow()
 
 	def check_for_update(self) -> bool:
 		'''
@@ -125,7 +122,7 @@ class KioskService:
 		version_file_not_accessible = False
 
 		while True:
-			if version_file_not_accessible
+			if version_file_not_accessible:
 				informed_delay(self.delay_drive_m * 60, "Waiting for drive access to be resolved", logger=self.log)
 
 			try:
@@ -138,6 +135,9 @@ class KioskService:
 					images = self.convert_presentation()
 
 					self.prepare_slideshow(images)
+
+					# while True:
+					# 	pass
 
 					self.stop_slideshow()
 					self.show_slideshow()
@@ -214,6 +214,50 @@ class KioskService:
 
 		return images
 
+	def read_timing_from_slides(self) -> [int]:
+		timings = []
+
+		# https://medium.com/social-impact-analytics/processing-pptx-files-194b25fa5d32
+		file_dict = {}
+
+		with open(self.presentation_file, 'rb') as f:
+			prs = Presentation(f)
+			self.log.debug(f"{prs=}")
+
+			text_runs = []
+
+			self.log.debug(f"{prs.slides=}")
+			for slide in prs.slides:
+				self.log.debug(f"{slide=}")
+				# Set default timing for all slides
+				timing = self.DEFAULT_TIMEOUT
+
+				self.log.debug(f"{slide.shapes=}")
+				for shape in slide.shapes:
+					self.log.debug(f"{shape=}")
+					if not shape.has_text_frame:
+						continue
+
+					self.log.debug(f"{shape.text_frame.paragraphs=}")
+					for paragraph in shape.text_frame.paragraphs:
+						self.log.debug(f"{paragraph=}")
+
+						self.log.debug(f"{paragraph.runs=}")
+						for run in paragraph.runs:
+							self.log.debug(f"{run=}")
+							txt = run.text
+
+							text_runs.append(txt)
+
+							if txt.startswith("t="):
+								time_str = txt[len("t="):]
+								timing = int(time_str)
+
+				timings.append(timing)
+
+			self.log.debug(f"{text_runs=}")
+
+		return timings
 
 	def prepare_slideshow(self, images):
 		'''
@@ -226,7 +270,8 @@ class KioskService:
 			shutil.copy(f, web_dir)
 
 		# Write the script for the server
-		timings = [ self.DEFAULT_TIMEOUT ] * len(images)
+		timings = self.read_timing_from_slides()
+		self.log.debug(f"{timings=}")
 
 		index_file = os.path.join(web_dir, "index.html")
 		SlideshowWriter(images, timings).write(index_file)

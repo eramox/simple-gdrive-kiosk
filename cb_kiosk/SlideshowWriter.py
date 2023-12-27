@@ -28,7 +28,7 @@ class SlideshowWriter:
 
 			for idx, _ in enumerate(self.slides):
 				div_slide=f"""
-<div class="mySlides fade" time="{self.timings_s[idx]}">
+<div class="mySlides fade" time="{self.timings_s[idx] * 1000}">
   <img src="{self.slides[idx]}" style="width:100%">
 </div>
 

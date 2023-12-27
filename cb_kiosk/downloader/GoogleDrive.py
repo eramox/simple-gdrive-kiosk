@@ -40,9 +40,6 @@ class GoogleDrive(Downloader):
     URL = "https://drive.google.com/uc"
     CHUNK_SIZE = 32768
 
-    def support_resource(resource: str) -> bool:
-        return resource.startswith("https://docs.google.com")
-
     def __init__(self, http_share_link: str, log = None):
         """
         id: Unique identifier of the google document
