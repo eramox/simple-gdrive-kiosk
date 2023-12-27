@@ -4,11 +4,11 @@ downloader_list = [
 	GoogleDrive
 ]
 
-def load(resource: str):
+def load(resource: str, log = None):
 	for loader in downloader_list:
 		obj = None
 		try:
-			obj = loader(resource)
+			obj = loader(resource, log=log)
 		except ValueError as e:
 			print(e)
 

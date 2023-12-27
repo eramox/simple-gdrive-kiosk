@@ -1,7 +1,6 @@
 import logging
 import os
 import tempfile
-import time
 import shutil
 
 from docx import Document
@@ -9,7 +8,7 @@ from docx import Document
 from downloader.Downloader import Downloader, DownloadError
 from downloader.loader import load as load_downloader
 from SlideshowWriter import SlideshowWriter
-from util import execute_command
+from util import execute_command, background_command, informed_delay
 from converter.Converter import Converter, Data
 from converter.PPTtoPDF import PPTtoPDF
 from converter.PDFtoPDFS import PDFtoPDFS
@@ -18,10 +17,6 @@ from DisplayServer import DisplayServer
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-def informed_delay(seconds: int, reason: str, logger: logging.Logger = logger) -> None:
-	logger.info(f"Delay {seconds} seconds: {reason}")
-	time.sleep(seconds)
 
 class KioskService:
 	'''
@@ -42,7 +37,7 @@ class KioskService:
 
 		# Variables related to the links
 		self.link: str = share_link_published_version
-		self.version_drive: Downloader = load_downloader(share_link_published_version)
+		self.version_drive: Downloader = load_downloader(share_link_published_version, log = self.log)
 		self.last_link: str = ""
 
 		self.delay_loop_s: int = delay_loop_s
@@ -59,7 +54,6 @@ class KioskService:
 		self.log.info(f"Created the kiosk service in {self.tdir} with a delay of {self.delay_loop_s} using file {self.link}")
 
 		self.display_task = None
-		self.has_drive_access = True
 
 		self.link_presentation = None
 
@@ -67,7 +61,7 @@ class KioskService:
 
 		self.wd = os.getcwd()
 
-		self.slideshow = None
+		self.slideshow_pid = None
 
 	# def __del__(self):
 	# 	self.stop()
@@ -114,7 +108,7 @@ class KioskService:
 		Download the presentation
 		'''
 		# Download the new document
-		presentation_drive: Downloader = load_downloader(self.link_presentation)
+		presentation_drive: Downloader = load_downloader(self.link_presentation, log = self.log)
 		presentation_drive.download(self.presentation_file)
 
 	# async def loop(self):
@@ -128,24 +122,27 @@ class KioskService:
 		'''
 		self.log.info(f"Starting main loop")
 
+		version_file_not_accessible = False
+
 		while True:
-			if not self.has_drive_access:
+			if version_file_not_accessible
 				informed_delay(self.delay_drive_m * 60, "Waiting for drive access to be resolved", logger=self.log)
 
 			try:
-				# if self.has_update():
-					# self.download_presentation()
+				if self.has_update():
+					self.download_presentation()
+					version_file_not_accessible = False
 
-				if True:
 					self.log.info(f"Post processing the file {self.presentation_file}")
 
 					images = self.convert_presentation()
 
 					self.prepare_slideshow(images)
 
+					self.stop_slideshow()
 					self.show_slideshow()
 			except DownloadError as e:
-				self.has_drive_access = False
+				version_file_not_accessible = True
 				self.log.error(f"Lost access to google drive: {e}")
 
 			# await asyncio.sleep(delay)
@@ -242,27 +239,28 @@ class KioskService:
 			"firefox",
 			"--kiosk",
 			"-private-window",
-			f"localhost:{self.WEBSERVER_PORT}/index.html"
+			f"localhost:{self.WEBSERVER_PORT}/index.html",
 		]
 
-		execute_command(cmd, log=self.log)
+		self.slideshow_pid = background_command(cmd, log=self.log)
+		self.log.debug(f"{self.slideshow_pid=}")
 
 	def stop_slideshow(self):
+		if self.slideshow_pid is None:
+			return
+
 		'''
 		Stop the disply of slides
 		'''
+		# cmd = [
+		# 	"ps", "-ux", 
+		# 	"|", "grep", "firefox",
+		# 	"|", "grep", "kiosk",
+		# 	"|", "awk", "'{print $2}'",
+		# 	"|", "xargs", "kill", "-9"
+		# ]
 		cmd = [
-			"ps", "-aux", 
-			"|", "grep", "firefox",
-			"|", "grep", "kiosk",
-			"|", "awk", "'{print $2}'",
-			"|", "xargs", "kill", "-9"
+			"kill", "-9", str(self.slideshow_pid)
 		]
 
 		execute_command(cmd, log=self.log)
-
-	def restart_slideshow(self):
-		if self.slideshow is not None:
-			self.stop_slideshow()
-
-		self.show_slideshow()

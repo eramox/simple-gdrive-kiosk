@@ -5,8 +5,8 @@ logger = logging.getLogger(__name__)
 
 class Downloader:
 
-	def __init__(self, resource: str):
-		self.log : Logger = logger
+	def __init__(self, resource: str, log = logger):
+		self.log : Logger = log
 		self.res = resource
 
 	def download(self, destination: str):

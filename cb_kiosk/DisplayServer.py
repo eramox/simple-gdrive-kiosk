@@ -51,9 +51,12 @@ class DisplayServer:
 			self.stop_server()
 
 		self.log.debug(f"Starting server {self.server}")
-		# thread.start_new_thread(self.__start_server(), () )
 		self.server_thread = threading.Thread(target=serve_forever, args=(self.server, ))
+
+		# Starting as deamon wil end the thread when the program stops
 		self.server_thread.setDaemon(True)
+
+		# Starting the thread
 		self.server_thread.start()
 		self.log.info(f"Server {self.server} started")
 

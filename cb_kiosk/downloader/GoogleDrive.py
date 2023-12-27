@@ -43,12 +43,12 @@ class GoogleDrive(Downloader):
     def support_resource(resource: str) -> bool:
         return resource.startswith("https://docs.google.com")
 
-    def __init__(self, http_share_link: str):
+    def __init__(self, http_share_link: str, log = None):
         """
         id: Unique identifier of the google document
         destination: Where to save the file downlaod
         """
-        super().__init__(http_share_link)
+        super().__init__(http_share_link, log=log)
 
         if not http_share_link.startswith(self.DRIVE_PATH):
             raise ValueError(f"The link {http_share_link} is not a google drive link")
@@ -115,7 +115,7 @@ class GoogleDrive(Downloader):
     def download(self, destination: str):
         self.log.debug(f"Downloading {self.uid} to {destination}")
         session = requests.Session()
-        session.cookies = ForgetfulCookieJar()
+        # session.cookies = ForgetfulCookieJar()
 
         params = {
             'export' : 'download',

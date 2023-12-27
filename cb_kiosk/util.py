@@ -21,3 +21,21 @@ def execute_command(cmd: [str], env = None, log = logger):
 	log.info(f"Command succeeded")
 
 	return result.returncode, result.stdout, result.stderr
+
+def background_command(cmd: [str], env = None, log = logger):
+	'''
+	Execute a command in shell, retreving the error code and the output
+	'''
+	log.info(f"Background {cmd}")
+
+	process = subprocess.Popen(cmd, env=env)
+
+	return process.pid
+
+
+import time
+
+def informed_delay(seconds: int, reason: str, logger: logging.Logger = logger) -> None:
+	logger.info(f"Delay {seconds} seconds: {reason}")
+	time.sleep(seconds)
+	logger.info(f"Woke up from: {reason}")
