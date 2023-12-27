@@ -8,6 +8,7 @@ from typing import List
 import shutil
 import http.server
 import threading
+import signal
 
 from docx import Document
 
@@ -22,6 +23,10 @@ def informed_delay(seconds: int, reason: str, logger: logging.Logger = logger) -
 	time.sleep(seconds)
 
 class KioskService:
+	'''
+	Based on a version file containing the presentation to be displayed,
+	the service will make the presentation displayed, checking regularly for updates
+	'''
 	VERSION_FILE = "tmp_file.docx"
 	PRESENTATION_FILE = "tmp_presentation.ppt"
 	CONVERT_OUTDIR = "convert"
@@ -60,6 +65,9 @@ class KioskService:
 		self.httpd = self.create_server()
 
 	def check_for_update(self) -> bool:
+		'''
+		Check for updates by checking if the content of the version file changed
+		'''
 		self.log.info(f"Checking if version file {self.link} changed")
 
 		# Download file containing the link of the published presentation
@@ -76,13 +84,26 @@ class KioskService:
 
 		return False
 
+	def has_update(self) -> bool:
+		return self.check_for_update()
+
 	def download_presentation(self) -> None:
+		'''
+		Download the presentation
+		'''
 		# Download the new document
 		presentation_drive = DriveFileDownloader(self.link_presentation, logger=self.log)
 		presentation_drive.download(self.presentation_file)
 
 	# async def loop(self):
 	def loop(self):
+		'''
+		Main loop doing:
+			- Download the presentation
+			- convert the presentation to images
+			- Prepare the slides to be discplayed
+			- Display the slides
+		'''
 		self.log.info(f"Starting main loop")
 
 		while True:
@@ -90,7 +111,7 @@ class KioskService:
 				informed_delay(self.delay_drive_m * 60, "Waiting for drive access to be resolved", logger=self.log)
 
 			try:
-				# if self.check_for_update():
+				# if self.has_update():
 					# self.download_presentation()
 
 				if True:
@@ -224,6 +245,9 @@ class KioskService:
 		return images
 
 	def convert_presentation(self) -> [str]:
+		'''
+		Convert the presentation to images
+		'''
 		self.log.info(f"Converting {self.presentation_file}")
 
 		shutil.rmtree(self.CONVERT_OUTDIR, ignore_errors=True)
@@ -244,6 +268,9 @@ class KioskService:
 		return images
 
 	def execute_command(self, cmd: List[str], env = None):
+		'''
+		Execute a command in shell, retreving the error code and the output
+		'''
 		self.log.info(f"Executing {cmd}")
 		result: subprocess.CompletedProcess = subprocess.run(cmd, capture_output=True, env=env)
 
@@ -258,6 +285,9 @@ class KioskService:
 
 
 	def prepare_slideshow(self, images):
+		'''
+		Write a webpage to display the slides
+		'''
 		web_dir = self.WEBSERVER_DIR
 
 		# Copy the files to the dir
@@ -271,6 +301,9 @@ class KioskService:
 		SlideshowWriter(images, timings).write(index_file)
 
 	def show_slideshow(self):
+		'''
+		Display the slides
+		'''
 		cmd = [
 			"firefox",
 			"--kiosk",
@@ -281,13 +314,16 @@ class KioskService:
 		self.execute_command(cmd)
 
 	def create_server(self):
+		'''
+		Create a server that will display the slides
+		'''
 		web_dir = self.WEBSERVER_DIR
 
 		os.makedirs(web_dir, exist_ok=True)
 
 		class Handler(http.server.SimpleHTTPRequestHandler):
-		    def __init__(self, *args, **kwargs):
-		        super().__init__(*args, directory=web_dir, **kwargs)
+			def __init__(self, *args, **kwargs):
+				super().__init__(*args, directory=web_dir, **kwargs)
 
 		_ , addr = http.server._get_best_family(None, self.WEBSERVER_PORT)
 		serv = http.server.HTTPServer(addr, Handler)
@@ -297,18 +333,27 @@ class KioskService:
 		return serv
 
 	def __start_server(self):
+		'''
+		Threaded function to start a server
+		'''
 		self.httpd.serve_forever()
 
 	def start_server(self):
+		# Kill the server if the program is stopped
+		def signal_term_handler(signal, frame):
+			print('got SIGTERM')
+			self.stop_server()
+
 		self.log.debug(f"Starting server {self.httpd}")
 		# thread.start_new_thread(self.__start_server(), () )
 		self.server_thread = threading.Thread(target=self.__start_server)
 		self.server_thread.start()
 		self.log.info(f"Server {self.httpd} started")
 
+		signal.signal(signal.SIGTERM, signal_term_handler)
+
 	def stop_server(self):
 		self.log.debug(f"Stopping server {self.httpd}")
 		self.httpd.shutdown()
 		self.server_thread._stop()
 		self.log.info(f"Server {self.httpd} stopped")
-

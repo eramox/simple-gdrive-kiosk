@@ -18,6 +18,11 @@ class SlideshowWriter:
 			raise ValueError(f)
 
 	def write(self, outfile):
+		'''
+		Write a webpage using JS to display the slideshow
+		Each slide is defined as a div element
+		The page will display each div (slide) at a time
+		'''
 		with open(outfile, 'w') as f:
 			f.write(self.bulk_start)
 
@@ -106,7 +111,7 @@ function showSlides() {
   // Default configuration
   let slides = document.getElementsByClassName("mySlides"); // Get all the slides
   for (i = 0; i < slides.length; i++) { // Hide all the slide
-    slides[i].style.display = "none";  
+	slides[i].style.display = "none";  
   }
   
   // Pass to the next slide

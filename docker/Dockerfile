@@ -4,14 +4,9 @@ FROM ubuntu
 # Set the working directory
 WORKDIR /app
 
-# Copy files from your host to your current working directory
-COPY cpp hello_zed_src
+APT_DEPENDENCIES
 
-# Build the application with cmake
-RUN mkdir /app/hello_zed_src/build && cd /app/hello_zed_src/build && \
-    cmake -DCMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs \
-      -DCMAKE_CXX_FLAGS="-Wl,--allow-shlib-undefined" .. && \
-    make
+PYTHON_DEPENDENCIES
 
 # Run the application
 CMD ["/app/hello_zed_src/build/ZED_Tutorial_1"]

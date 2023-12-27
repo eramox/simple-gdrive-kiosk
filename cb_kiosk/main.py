@@ -2,64 +2,63 @@ import logging
 import logging.handlers
 import os
 import sys
-import signal
 
 from kiosk_service import KioskService
 
-# Configuration of logging
-# https://stackoverflow.com/questions/41814988/share-python-logger-across-multiple-files
-format = '%(asctime)s - %(module)s - %(levelname)s - %(message)s'
 logging.basicConfig(filename=f"kiosk.log")
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter(format)
+def configure_logger():
 
-fileHandler = logging.FileHandler("kiosk.log")
-fileHandler.setFormatter(formatter)
-log.addHandler(fileHandler)
+	# Configuration of logging
+	# https://stackoverflow.com/questions/41814988/share-python-logger-across-multiple-files
+	format = '%(asctime)s - %(module)s - %(levelname)s - %(message)s'
 
-consoleHandler = logging.StreamHandler()
-consoleHandler.setFormatter(formatter)
-log.addHandler(consoleHandler)
+	formatter = logging.Formatter(format)
+
+	# Log to file
+	fileHandler = logging.FileHandler("kiosk.log")
+	fileHandler.setFormatter(formatter)
+	log.addHandler(fileHandler)
+
+	# Log to shell
+	consoleHandler = logging.StreamHandler()
+	consoleHandler.setFormatter(formatter)
+	log.addHandler(consoleHandler)
+
+def process_args() -> str:
+	'''
+	The only input we expect is one parameter which is the link to the file storing
+	the file to display
+	'''
+
+	nb_args = len(sys.argv)
+
+	if nb_args > 1:
+		version_share_link = sys.argv[1]
+		log.info(f"Using the version file {version_share_link}")
+
+		return version_share_link
+	else:
+		raise ValueError(f"Missing link on version file")
 
 if __name__ == "__main__":
-    nb_args = len(sys.argv)
+	configure_logger()
 
-    if nb_args > 1:
-        version_share_link = sys.argv[1]
-        log.info(f"Using the version file {version_share_link}")
-    else:
-        log.error(f"Missing link on version file")
-        exit(1)
+	version_share_link = process_args()
 
-    # if nb_args > 2:
-    #     new_root_dir = sys.argv[2]
-    #     log.info(f"Chnaging root to new directory: {new_root_dir}")
-    #     os.chdir(new_root_dir)
+	service = KioskService(version_share_link, logger=log)
 
-    service = KioskService(version_share_link, logger=log)
+	try:
+		service.start_server()
 
-    def signal_term_handler(signal, frame):
-        print('got SIGTERM')
-        service.stop_server()
- 
-    signal.signal(signal.SIGTERM, signal_term_handler)
+		log.debug(f"Running main loop")
+		service.loop()
+	except KeyboardInterrupt:
+		log.error("ctrl+c pressed")
+	finally:
+		service.stop_server()
 
-    ret = 0
-    try:
-        service.start_server()
-        log.debug(f"Running main loop")
-        service.loop()
-        a = 1
-        while True:
-            a = a + 1
-    except KeyboardInterrupt:
-        log.error("ctrl+c pressed")
-        ret = 1
-    finally:
-        service.stop_server()
-
-    log.warning(f"out of the main loop")
-    sys.exit(ret)
+	log.warning(f"out of the main loop")

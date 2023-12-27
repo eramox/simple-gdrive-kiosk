@@ -8,6 +8,7 @@ default: run
 
 build:
 	echo "Building"
+	PROJ_ROOT=${PROJ_ROOT} make -C docker
 
 setup:
 	echo "Setuping"
