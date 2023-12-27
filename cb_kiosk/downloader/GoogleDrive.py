@@ -1,15 +1,14 @@
 import re
 import sys
 import requests
-import logging
 import json
 
-from requests_toolbelt.utils import dump
-import requests_debugger
-from requests_toolbelt.cookies.forgetful import ForgetfulCookieJar
+# from requests_toolbelt.utils import dump
+# import requests_debugger
+# from requests_toolbelt.cookies.forgetful import ForgetfulCookieJar
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+from downloader.Downloader import Downloader, DownloadError
+
 
 '''
 In case get does nto seolve, disable ipv6:
@@ -33,24 +32,31 @@ def pretty_print_POST(req) -> str:
         '------------END------------',
     )
 
-class DriveError(Exception):
+class DriveError(DownloadError):
     pass
 
-class DriveFileDownloader:
+class GoogleDrive(Downloader):
+    DRIVE_PATH = "https://docs.google.com/"
     URL = "https://drive.google.com/uc"
     CHUNK_SIZE = 32768
 
-    def __init__(self, share_link: str, logger=logger):
+    def support_resource(resource: str) -> bool:
+        return resource.startswith("https://docs.google.com")
+
+    def __init__(self, http_share_link: str):
         """
         id: Unique identifier of the google document
         destination: Where to save the file downlaod
         """
-        self.log : Logger = logger
-        self.link : str = share_link
+        super().__init__(http_share_link)
+
+        if not http_share_link.startswith(self.DRIVE_PATH):
+            raise ValueError(f"The link {http_share_link} is not a google drive link")
+
         self.export_type : str = "pptx"
         self.uid : str
         self.share_link : str
-        self.uid, self.share_link = self.get_link_data(share_link)
+        self.uid, self.share_link = self.get_link_data(self.res)
 
     def get_link_data(self, link):
         # We replace the /view or /edit with /export
@@ -141,7 +147,7 @@ class DriveFileDownloader:
             self.save_response_content(response, destination)
             return
         elif response.status_code == 500:
-            self.log.debug(dump.dump_all(response).decode('utf-8'))
+ #           self.log.debug(dump.dump_all(response).decode('utf-8'))
 
             response2 = session.get(response.headers['location'])
 

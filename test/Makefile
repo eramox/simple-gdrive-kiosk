@@ -17,4 +17,5 @@ setup_env: ${OUT_DIR}/venv/done
 start_test: setup_env
 	cp "${PROJ_ROOT}/conf/script_split_pdf_page.sh" "${OUT_DIR}/pdfsplit.sh"
 	chmod +x "${OUT_DIR}/pdfsplit.sh"
-	cd ${OUT_DIR} && python3 ${KIOSK_SERVICE} ${GOOGLE_DRIVE_CONTENT_FILE}
+	cd ${OUT_DIR}
+	python3 ${KIOSK_SERVICE} ${GOOGLE_DRIVE_CONTENT_FILE}
