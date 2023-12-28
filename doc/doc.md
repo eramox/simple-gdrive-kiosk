@@ -270,9 +270,17 @@ impressive --auto 15 --fullscreen --page-progress --wrap --nocursor --nologo --n
 ```
 
 
+# Autres
 
+## Connexion a un reseau wifi depuis le terminal
 
+```
+sudo nmcli dev wifi list
+```
 
+```
+sudo nmcli dev wifi connect <SSID> password <PWD>
+```
 
 
 
