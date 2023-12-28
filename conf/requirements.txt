@@ -6,3 +6,4 @@ requests_debugger
 python-docx
 # Get the timings
 python-pptx
+PyPDF2

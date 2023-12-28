@@ -1,5 +1,6 @@
 import os
 import glob
+from PyPDF2 import PdfWriter, PdfReader
 
 from converter.Converter import Converter, Data
 
@@ -11,26 +12,17 @@ class PDFtoPDFS(Converter):
 		return "split_pdf"
 
 	def convert_one(self, pdf) -> [str]:
-		pdf = str(pdf)
-		basename = os.path.basename(pdf)
-		file_wo_ext = basename[:-4]
+		outputs = []
+		inputpdf = PdfReader(open(str(pdf), "rb"))
 
-		cmd = [
-			"./pdfsplit.sh",
-			f"{str(pdf)}",
-			"1",
-			f"{self.wd}/",
-		]
+		for i in range(len(inputpdf.pages)):
+		    output = PdfWriter()
+		    output.add_page(inputpdf.pages[i])
+		    
+		    name = "document-page%s.pdf" % i
+		    with open(name, "wb") as outputStream:
+		        output.write(outputStream)
 
-		execute_command(cmd)
+		    outputs.append(Data(name))
 
-		outfiles = list(glob.glob(f"{self.wd}/{file_wo_ext}_*.pdf"))
-		nb_outfiles = len(list(glob.glob(f"{self.wd}/{file_wo_ext}_*.pdf")))
-
-		if nb_outfiles == 0:
-			raise FileNotFoundError(f"Split of {pdf} into pages failed")
-		else:
-			outfiles = [ Data(f"{self.wd}/{file_wo_ext}_{i}.pdf") for i, _ in enumerate(outfiles) ]
-			self.log.debug(f"Generated {outfiles}")
-
-		return outfiles
+		return outputs
