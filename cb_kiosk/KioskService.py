@@ -222,29 +222,29 @@ class KioskService:
 
 		with open(self.presentation_file, 'rb') as f:
 			prs = Presentation(f)
-			self.log.debug(f"{prs=}")
+			# self.log.debug(f"{prs=}")
 
 			text_runs = []
 
-			self.log.debug(f"{prs.slides=}")
+			# self.log.debug(f"{prs.slides=}")
 			for slide in prs.slides:
-				self.log.debug(f"{slide=}")
+				# self.log.debug(f"{slide=}")
 				# Set default timing for all slides
 				timing = self.DEFAULT_TIMEOUT
 
-				self.log.debug(f"{slide.shapes=}")
+				# self.log.debug(f"{slide.shapes=}")
 				for shape in slide.shapes:
-					self.log.debug(f"{shape=}")
+					# self.log.debug(f"{shape=}")
 					if not shape.has_text_frame:
 						continue
 
-					self.log.debug(f"{shape.text_frame.paragraphs=}")
+					# self.log.debug(f"{shape.text_frame.paragraphs=}")
 					for paragraph in shape.text_frame.paragraphs:
-						self.log.debug(f"{paragraph=}")
+						# self.log.debug(f"{paragraph=}")
 
-						self.log.debug(f"{paragraph.runs=}")
+						# self.log.debug(f"{paragraph.runs=}")
 						for run in paragraph.runs:
-							self.log.debug(f"{run=}")
+							# self.log.debug(f"{run=}")
 							txt = run.text
 
 							text_runs.append(txt)
@@ -255,7 +255,7 @@ class KioskService:
 
 				timings.append(timing)
 
-			self.log.debug(f"{text_runs=}")
+			# self.log.debug(f"{text_runs=}")
 
 		return timings
 
