@@ -7,16 +7,13 @@ downloader_list = [
 ]
 
 def load(resource: str, log = None):
+	obj = None
 	for loader in downloader_list:
-		obj = None
 		try:
 			obj = loader(resource, log=log)
+			log.debug(f"using the downlaoder {loader}")
+			return obj
 		except ValueError as e:
 			print(e)
 
-		log.debug(f"using the downlaoder {loader}")
-
-	if obj is None:
-		raise ValueError(f"Could not find a loader for [{resource}] in {str(downloader_list)}")
-
-	return obj
+	raise ValueError(f"Could not find a loader for [{resource}] in {str(downloader_list)}")
