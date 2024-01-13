@@ -30,9 +30,9 @@ class KioskService:
 	WEBSERVER_DIR = "webserver"
 	DISPLAY_FILE = "presentation.pdf"
 	WEBSERVER_PORT = 8000
-	DEFAULT_TIMEOUT = 2
+	DEFAULT_TIMEOUT = 15
 
-	def __init__(self, share_link_published_version: str, delay_loop_s: int = 10, logger=logger):
+	def __init__(self, share_link_published_version: str, delay_loop_s: int = 60, logger=logger):
 		""" Link to the file containing the share link of the presentation to use """
 		self.log = logger
 
