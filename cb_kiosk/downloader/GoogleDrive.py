@@ -74,34 +74,6 @@ class GoogleDrive(Downloader):
 
         return uid, exp_link
 
-    def get_unique_if(self, uid: str) -> str:
-        self.log.debug(f"Resolving UID for {uid}")
-
-        if uid.startswith("http"):
-            # The string is of the form https://docs.google.com/presentation/d/<UID>/edit?usp=sh<garbage>
-            # We capture the ID which is between the /d/ marker and the /edit marker
-            result = re.search('.*d/(.*)/edit', uid)
-
-            if result is None:
-                result = re.search('.*d/(.*)/view', uid)
-
-            if result is not None:
-                uid = result.group(1)
-                self.log.debug(f"Resolved to {uid}")
-            else:
-                raise ValueError(f"Cannot find the UID from {uid}")
-
-        return uid
-
-
-    def get_confirm_token(self, response):
-        self.log.debug(f"Cookies: {response.cookies.items()}")
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                return value
-
-        return None
-
     def save_response_content(self, response, destination):
         self.log.debug(f'Saving to {destination}')
         with open(destination, "wb") as f:
