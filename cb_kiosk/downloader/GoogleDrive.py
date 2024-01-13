@@ -84,7 +84,7 @@ class GoogleDrive(Downloader):
 
             if result is None:
                 result = re.search('.*d/(.*)/view', uid)
-                
+
             if result is not None:
                 uid = result.group(1)
                 self.log.debug(f"Resolved to {uid}")
@@ -122,16 +122,16 @@ class GoogleDrive(Downloader):
         req = requests.Request('GET', self.URL, params = params)
         prepped = req.prepare()
 
-        self.log.debug(pretty_print_POST(prepped))
+        # self.log.debug(pretty_print_POST(prepped))
 
         try:
             response = session.get(self.URL, params = params)
         except requests.exceptions.HTTPError as e:
             raise DriveError(e)
 
-        self.log.debug(f"{response.headers=}")
-        self.log.debug(f"{response.json=}")
-        self.log.debug(f"{response.cookies=}")
+#        self.log.debug(f"{response.headers=}")
+#        self.log.debug(f"{response.json=}")
+#        self.log.debug(f"{response.cookies=}")
         # self.log.debug(f"Content-Disposition {response.headers['Content-Disposition']}")
         # self.log.debug(f"Content-Type {response.headers['Content-Type']=}")
 
