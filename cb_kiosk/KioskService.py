@@ -290,6 +290,12 @@ class KioskService:
 		self.slideshow_pid = background_command(cmd, log=self.log)
 		self.log.debug(f"{self.slideshow_pid=}")
 
+		# Allow to "wake up" the screen
+		cmd = [
+			"xset", "s", "reset"
+		]
+		execute_command(cmd, log=self.log)
+
 	def stop_slideshow(self):
 		if self.slideshow_pid is None:
 			return
