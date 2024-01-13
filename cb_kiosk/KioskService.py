@@ -2,6 +2,7 @@ import logging
 import os
 import tempfile
 import shutil
+from tempfile import TemporaryDirectory
 
 from docx import Document
 from pptx import Presentation
@@ -186,6 +187,9 @@ class KioskService:
 		self.log.info(f"Converting {self.presentation_file}")
 
 		class presentation_converter(Converter):
+			def get_opname(self) -> str:
+				return "base"
+
 			def convert_one(self, data: Data) -> [Data]:
 
 				ppt_to_pdf = PPTtoPDF(self.wd, log=self.log)
@@ -201,7 +205,9 @@ class KioskService:
 
 				return images
 
-		convert_dir = os.path.join(self.wd, self.CONVERT_OUTDIR)
+#		convert_dir = os.path.join(self.wd, self.CONVERT_OUTDIR)
+#		convert_dir = TemporaryDirectory().name
+		convert_dir = self.wd
 
 		pres_converter = presentation_converter(convert_dir, log=self.log)
 		data_images = pres_converter.convert([Data(self.presentation_file)])

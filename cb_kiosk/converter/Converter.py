@@ -30,13 +30,15 @@ class Converter:
 		'''
 		self.log.debug(f"Convert {inputs} to {self.get_opname()}")
 
-		wd = os.path.join(self.tmpdir, self.get_opname())
-		shutil.rmtree(wd, ignore_errors=True)
-		os.mkdir(wd)
+#		wd = os.path.join(self.tmpdir, self.get_opname())
+#		self.log.debug(f"Creating {wd}")
+#		shutil.rmtree(wd, ignore_errors=True)
+#		os.makedirs(wd, exist_ok=True)
 
-		self.log.debug(f"Created {wd}")
-		self.wd = wd
-		
+#		self.log.debug(f"Created {wd}")
+#		self.wd = wd
+		self.wd = self.tmpdir
+
 		outputs = self.convert_list(inputs)
 
 		self.log.debug(f"Converted to {str(outputs)}")
