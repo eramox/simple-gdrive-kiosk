@@ -26,7 +26,8 @@ class KioskService:
 	the service will make the presentation displayed, checking regularly for updates
 	'''
 	VERSION_FILE = "tmp_file.docx"
-	PRESENTATION_FILE = "tmp_presentation.ppt"
+	TIMING_FILE = "tmp_timing.ppt"
+	PRESENTATION_FILE = "tmp_presentation.pdf"
 	CONVERT_OUTDIR = "convert"
 	WEBSERVER_DIR = "webserver"
 	DISPLAY_FILE = "presentation.pdf"
@@ -50,6 +51,7 @@ class KioskService:
 		self.tdir = os.getcwd()
 
 		self.version_file: str = os.path.join(self.tdir, self.VERSION_FILE)
+		self.timing_file: str = os.path.join(self.tdir, self.TIMING_FILE)
 		self.presentation_file: str = os.path.join(self.tdir, self.PRESENTATION_FILE)
 		self.display_file: str = os.path.join(self.tdir, self.DISPLAY_FILE)
 
@@ -109,7 +111,8 @@ class KioskService:
 		'''
 		# Download the new document
 		presentation_drive: Downloader = load_downloader(self.link_presentation, log = self.log)
-		presentation_drive.download(self.presentation_file)
+		presentation_drive.download_presentation(self.timing_file)
+		presentation_drive.download_presentation(self.presentation_file)
 
 	# async def loop(self):
 	def loop(self):
@@ -194,12 +197,12 @@ class KioskService:
 
 			def convert_one(self, data: Data) -> [Data]:
 
-				ppt_to_pdf = PPTtoPDF(self.wd, log=self.log)
-				pdf = ppt_to_pdf.convert([data])
-				self.log.debug(f"{pdf=}")
+				# ppt_to_pdf = PPTtoPDF(self.wd, log=self.log)
+				# pdf = ppt_to_pdf.convert([data])
+				# self.log.debug(f"{pdf=}")
 
 				pdf_to_pdfs = PDFtoPDFS(self.wd, log=self.log)
-				pdfs = pdf_to_pdfs.convert(pdf)
+				pdfs = pdf_to_pdfs.convert([data])
 				self.log.debug(f"{pdfs=}")
 
 				pdf_to_jpegs = PDFtoJPEG(self.wd, log=self.log)
@@ -228,7 +231,7 @@ class KioskService:
 		# https://medium.com/social-impact-analytics/processing-pptx-files-194b25fa5d32
 		file_dict = {}
 
-		with open(self.presentation_file, 'rb') as f:
+		with open(self.timing_file, 'rb') as f:
 			prs = Presentation(f)
 			# self.log.debug(f"{prs=}")
 
