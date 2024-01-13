@@ -2,6 +2,7 @@ import re
 import sys
 import requests
 import json
+import pathlib
 
 # from requests_toolbelt.utils import dump
 # import requests_debugger
@@ -81,65 +82,81 @@ class GoogleDrive(Downloader):
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
 
+
+
     def download(self, destination: str):
         self.log.debug(f"Downloading {self.uid} to {destination}")
-        session = requests.Session()
-        # session.cookies = ForgetfulCookieJar()
+
+        extension = pathlib.Path(destination).suffix
 
         params = {
             'export' : 'download',
             'id' : self.uid,
         }
 
-        req = requests.Request('GET', self.URL, params = params)
-        prepped = req.prepare()
+        def callback_response(response):
+            self.save_response_content(response, destination)
 
-        # self.log.debug(pretty_print_POST(prepped))
+        with requests.Session() as session:
+            req = requests.Request('GET', self.URL, params = params)
+            process_req(session, req, callback_response, self.log)
 
-        try:
-            response = session.get(self.URL, params = params)
-        except requests.exceptions.HTTPError as e:
-            raise DriveError(e)
+    def download_presentation(self, destination: str):
+        self.log.debug(f"Downloading presentation {self.uid} to {destination}")
+
+        url = "https://docs.google.com/feeds/download/presentations/Export"
+
+        extension = pathlib.Path(destination).suffix[1:]
+
+        params = {
+            'id' : self.uid,
+            'format' : extension,
+        }
+
+        def callback_response(response):
+            self.save_response_content(response, destination)
+
+        with requests.Session() as session:
+            req = requests.Request('GET', url, params = params)
+            process_req(session, req, callback_response, self.log)
+
+def process_req(session, req, callback_response, log):
+    prepped = req.prepare()
+
+    log.debug(pretty_print_POST(prepped))
+
+    try:
+        response = session.send(prepped)
+    except requests.exceptions.HTTPError as e:
+        raise DriveError(e)
 
 #        self.log.debug(f"{response.headers=}")
 #        self.log.debug(f"{response.json=}")
 #        self.log.debug(f"{response.cookies=}")
-        # self.log.debug(f"Content-Disposition {response.headers['Content-Disposition']}")
-        # self.log.debug(f"Content-Type {response.headers['Content-Type']=}")
+    # self.log.debug(f"Content-Disposition {response.headers['Content-Disposition']}")
+    # self.log.debug(f"Content-Type {response.headers['Content-Type']=}")
 
-        # self.log.debug(f"content size = {len(response.content)}")
-        self.log.debug(f"{response.status_code=} {type(response.status_code)=}")
+    # self.log.debug(f"content size = {len(response.content)}")
+    log.debug(f"{response.status_code=} {type(response.status_code)=}")
 
 
-        if response.status_code == 200:
-            # We save the value
-            self.save_response_content(response, destination)
-            return
-        elif response.status_code == 500:
- #           self.log.debug(dump.dump_all(response).decode('utf-8'))
+    if response.status_code == 200:
+        # We save the value
+        callback_response(response)
+        return
+    elif response.status_code == 500:
+#           self.log.debug(dump.dump_all(response).decode('utf-8'))
 
-            response2 = session.get(response.headers['location'])
+        response2 = session.get(response.headers['location'])
 
-            self.log.debug(f"{response2.headers=}")
-            self.log.debug(f"{response2.json=}")
-            self.log.debug(f"{response2.cookies=}")
-            self.log.debug(f"{response.status_code=} {type(response.status_code)=}")
+        log.debug(f"{response2.headers=}")
+        log.debug(f"{response2.json=}")
+        log.debug(f"{response2.cookies=}")
+        log.debug(f"{response.status_code=} {type(response.status_code)=}")
 
-            # if not response.ok:
-            #     raise ValueError(f"Failed to download document {response.status_code}: {response.reason}")
-
-            self.save_response_content(response2, destination)
-
-            return
-        else:
-            response.raise_for_status()
-
-        # Download the document
-        headers = {
-            'accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'accept-encoding' : 'gzip, deflate, br'
-        }
-
+        return
+    else:
+        response.raise_for_status()
 
 if __name__ == "__main__":
     print(f"argv: {sys.argv}")
