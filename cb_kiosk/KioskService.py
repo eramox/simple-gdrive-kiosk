@@ -96,6 +96,8 @@ class KioskService:
 			self.link_presentation = link_presentation
 			return True
 
+		self.log.info(f"No new version")
+
 		return False
 
 	def has_update(self) -> bool:
