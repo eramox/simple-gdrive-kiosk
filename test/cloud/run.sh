@@ -14,4 +14,9 @@ if [ ! -z "${VENV}" ];then
 	. "${VENV}/bin/activate"
 fi
 
+# Echo print env
+set
+
+env
+
 python3 "${KIOSK_DIR}/main.py" "${VERSION_FILE}"
