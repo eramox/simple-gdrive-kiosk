@@ -10,6 +10,12 @@ KIOSK_DIR="$(realpath "${ROOT_DIR}/cb_kiosk" )"
 # Note the version file must be edited to point to a ppt file
 VERSION_FILE="https://docs.google.com/document/d/11hGse_OyqGQiy3qAaDMSHnrFX0_YyG2o/edit?usp=drive_link&ouid=104564737776631583414&rtpof=true&sd=true"
 
+if [ -n "${KIOSK_TMPDIR}" ];then
+	mkdir -p "${KIOSK_TMPDIR}"
+	cd "${KIOSK_TMPDIR}"
+	rm -Rf *
+fi
+
 echo "Running from dir ${PWD}"
 
 # Set the path to the venv if it is not defined
