@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullscreen Image Viewer</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #fullscreen-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        #loading {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+        }
+        
+        #error {
+            color: red;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="image-container">
+        <div id="loading">Loading image...</div>
+        <div id="error">Error loading image.</div>
+        <img id="fullscreen-image" style="display: none;" alt="Fullscreen Image">
+    </div>
+
+    <script>
+        // Main async function to handle all the logic
+        let slideInterval;
+
+        async function loadFullscreenImage() {
+            const baseUrl = 'http://127.0.0.1:5000';
+            const imageElement = document.getElementById('fullscreen-image');
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            
+            if (slideInterval) {
+                clearInterval(slideInterval)
+            }
+
+            try {
+                // Step 1: Get the image name from /get_image
+                const imageNameResponse = await fetch(`${baseUrl}/get_image`);
+                if (!imageNameResponse.ok) {
+                    throw new Error(`Failed to get image name: ${imageNameResponse.status}`);
+                }
+                const imageData = await imageNameResponse.json();
+                const imageName = imageData.name;
+                
+                // Step 2: Get the duration using the image name
+                const durationResponse = await fetch(`${baseUrl}/get_duration/${imageName}`);
+                
+                if (!durationResponse.ok) {
+                    throw new Error(`Failed to get duration: ${durationResponse.status}`);
+                }
+                const durationData = await durationResponse.json();
+                const duration = durationData.duration;
+                console.log(`Image: ${imageName}, Duration: ${duration}`);
+                
+                // Step 3: Get the image blob
+                const imageResponse = await fetch(`${baseUrl}/images/${imageName}`);
+                if (!imageResponse.ok) {
+                    throw new Error(`Failed to get image: ${imageResponse.status}`);
+                }
+                const imageBlob = await imageResponse.blob();
+                
+                // Step 4: Display the image
+                const imageUrl = URL.createObjectURL(imageBlob);
+                imageElement.src = imageUrl;
+                imageElement.style.display = 'block';
+                loadingElement.style.display = 'none';
+                
+                // Optional: If you want to use the duration for something
+                // For example, you could auto-hide the image after the duration
+                if (duration) {
+                    // setTimeout(() => {
+                    //     console.log(`Image displayed for ${duration} seconds`);
+                    //     // Do something after duration expires if needed
+                    // }, duration * 1000);
+                    slideInterval = setInterval(loadFullscreenImage, duration * 1000)
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+                errorElement.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Call the function when the page loads
+        document.addEventListener('DOMContentLoaded', loadFullscreenImage);
+    </script>
+</body>
+</html>
