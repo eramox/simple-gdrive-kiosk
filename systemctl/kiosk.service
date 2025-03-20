@@ -1,0 +1,11 @@
+[Unit]
+Description=kiosk
+
+[Service]
+Type=simple
+StandardOutput=journal
+Environment="KIOSK_TMPDIR=kiosk_tmp"
+ExecStart=bash /home/eramox/Documents/workspace/cannes_beach_kiosk/test/cloud/run.sh
+
+[Install]
+WantedBy=default.target
