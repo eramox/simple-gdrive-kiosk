@@ -1,14 +1,17 @@
 
+OUTD=$(OUTDIR)/kiosk
+
 all: test
 
-venv:
-	python3 -m venv venv
-	. ./venv/bin/activate && pip3 install google-api-python-client oauth2client PyYAML pillow python-pptx
+$(OUTD)/venv:
+	mkdir -p $(OUTD)
+	python3 -m venv $@
+	. $@/bin/activate && pip3 install -r $(ROOT)/kiosk_requirements.txt
 
 test: venv start
 
 start: venv
-	. ./venv/bin/activate && python3 ../kiosk.py
+	. $(OUTD)/venv/bin/activate && cd $(OUTD) && python3 $(ROOT)/kiosk.py
 
 clean:
-	rm -Rf venv
+	rm -Rf $(OUTD)/venv

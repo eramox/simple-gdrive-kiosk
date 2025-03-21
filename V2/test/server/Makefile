@@ -1,15 +1,20 @@
 
+OUTD=$(OUTDIR)/kiosk
+
+.PHONY: clean
+
 all: test
 
-venv:
-	python3 -m venv venv
-	. ./venv/bin/activate && pip3 install flask pyyaml flask-cors
+$(OUTD)/venv:
+	mkdir -p $(OUTD)
+	python3 -m venv $@
+	. $@/bin/activate && pip3 install -r $(ROOT)/code/server_requirements.txt
 
-test: venv
-	. ./venv/bin/activate && bash test.sh
+test: $(OUTD)/venv
+	. $</bin/activate && ROOT=$(ROOT) OUTDIR=$(OUTDIR) bash test.sh
 
-start: venv
-	. ./venv/bin/activate && python3 ../server.py
+start: $(OUTD)/venv
+	. $</bin/activate && cd $(OUTD) && python3 $(ROOT)/code/server.py
 
 clean:
 	rm -Rf venv

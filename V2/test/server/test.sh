@@ -4,11 +4,16 @@ set -e
 
 # Test script for the server
 
+OUTDIR="${OUTDIR:"${PWD}"}"
+ROOT="${ROOT:"${PWD}"}"
+
+IMAGE_DIR="$(dirname $0)/images"
+
 SERVER="http://127.0.0.1:5000"
-TMP_FILE="out.json"
+TMP_FILE="${OUTDIR}/out.json"
 
 # Start server
-export FLASK_APP="$(realpath ../server.py)"
+export FLASK_APP="${ROOT}/code/server.py"
 # Run via flask to avoid flask start another process
 flask run &
 
@@ -21,7 +26,7 @@ function server_cleanup() {
 }
 
 function script_cleanup() {
-	cp "images/slideshow.yaml.empty" "images/slideshow.yaml"
+	cp "${IMAGE_DIR}/slideshow.yaml.empty" "${IMAGE_DIR}/slideshow.yaml"
 	server_cleanup
 }
 
@@ -67,12 +72,12 @@ function check_ep() {
 # Test server
 
 # Empty slideshow
-cp "images/slideshow.yaml.empty" "images/slideshow.yaml"
+cp "${IMAGE_DIR}/slideshow.yaml.empty" "${IMAGE_DIR}/slideshow.yaml"
 
 # slideshow1
 
-cp "images/slideshow1.yaml" "images/slideshow.yaml"
-touch "images/refresh"
+cp "${IMAGE_DIR}/slideshow1.yaml" "${IMAGE_DIR}/slideshow.yaml"
+touch "${IMAGE_DIR}/refresh"
 IMAGES=("slide1.jpeg" "slide2.jpeg")
 
 # These are dependent
@@ -86,8 +91,8 @@ check_ep "/get_duration" "duration" "10" "/${IMAGES[1]}"
 
 # slideshow2
 
-cp "images/slideshow2.yaml" "images/slideshow.yaml"
-touch "images/refresh"
+cp "${IMAGE_DIR}/slideshow2.yaml" "${IMAGE_DIR}/slideshow.yaml"
+touch "${IMAGE_DIR}/refresh"
 IMAGES=("slide3.jpeg" "slide4.jpeg")
 
 # These are dependent

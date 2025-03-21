@@ -1,13 +1,16 @@
 
 # Expects OUTDIR to be set
 
-all:
+.PHONY: all kiosk client server
+
+all: server 
+#client kiosk
 
 kiosk:
 	make -C kiosk
 
 client:
-	make -C web/client
+	make -C client
 
 server:
-	make -C web/server
+	make -C server
