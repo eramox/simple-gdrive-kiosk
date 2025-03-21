@@ -34,9 +34,12 @@ def download_file(file_id, output_file):
 def extract_url_from_docx(docx_file):
     # Convert docx to text and search for Google Slides URL
     with tempfile.NamedTemporaryFile(suffix='.txt') as temp:
+        outdir = os.path.dirname(temp.name)
         subprocess.run(["libreoffice", "--headless", "--convert-to", "txt", 
-                       "--outdir", os.path.dirname(temp.name), docx_file])
-        txt_file = os.path.splitext(docx_file)[0] + '.txt'
+                       "--outdir", outdir, docx_file])
+        basename = os.path.basename(docx_file)
+        txt_file = os.path.join(outdir, os.path.splitext(basename)[0] + '.txt')
+        print(f"{txt_file=}")
         with open(txt_file, 'r') as f:
             content = f.read()
         

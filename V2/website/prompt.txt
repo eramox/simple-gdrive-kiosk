@@ -1,4 +1,0 @@
-You are a senior web developer and I need you to write an HTML page that display an image in fullscreen.
-Retrieve the image name in json response of /get_image then use it to retrieve the duration from the json response of /get_duration and the image blob from /images.
-All the logic should be in 1 async function.
-the server is http://127.0.0.1:5000
